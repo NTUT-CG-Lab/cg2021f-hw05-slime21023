@@ -12,14 +12,13 @@ import {
     DirectionalLight,
     WebGLRenderer,
     Vector3,
-    MathUtils
+    MathUtils,
+    Quaternion
 } from './build/three.module.js'
-
 
 Ammo().then(async AmmoLib => {
     Ammo = AmmoLib
     const data = await load()
-    // console.log(data)
     const animate = init(data)
     animate()
 })
@@ -63,7 +62,6 @@ const initGui = (mesh, data) => {
     for (const key in standardlist) { controls[key] = 0.0 }
 
     keys.forEach(key => {
-        console.log(key)
         if (!data[key] || data[key] == -1) {
             morphs.add(controls, key, 0.0, 0.0, 0.01)
             return
@@ -89,30 +87,34 @@ const initGui = (mesh, data) => {
     for (const key in normalizeList) { controls[key] = 0.0 }
     const { bones } = mesh.skeleton
     const [neck] = bones.filter(b => b.name == '首')
-    // const [head] = bones.filter(b => b.name == "頭")
     const iris = bones.filter(b => b.name == '左目' || b.name == '右目')
-
-
+    
 
     morphs.add(controls, 'head_x', -1.0, 1.0, 0.01).onChange(() => {
-        neck.setRotationFromAxisAngle(
+        const q = neck.quaternion.clone()
+        q.setFromAxisAngle(
             new Vector3(1, 0, 0),
             MathUtils.degToRad(15 * (controls['head_x'] + 1) - 15)
         )
+        neck.setRotationFromQuaternion(q)
     })
 
     morphs.add(controls, 'head_y', -1.0, 1.0, 0.01).onChange(() => {
-        neck.setRotationFromAxisAngle(
+        const q = neck.quaternion.clone()
+        q.setFromAxisAngle(
             new Vector3(0, 1, 0),
             MathUtils.degToRad(15 * (controls['head_y'] + 1) - 15)
         )
+        neck.setRotationFromQuaternion(q)
     })
 
     morphs.add(controls, 'head_z', -1.0, 1.0, 0.01).onChange(() => {
-        neck.setRotationFromAxisAngle(
+        const q = neck.quaternion.clone()
+        q.setFromAxisAngle(
             new Vector3(0, 0, 1),
             MathUtils.degToRad(15 * (controls['head_z'] + 1) - 15)
         )
+        neck.setRotationFromQuaternion(q)
     })
 
     morphs.open()
