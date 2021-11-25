@@ -10,7 +10,9 @@ import {
     Color,
     AmbientLight,
     DirectionalLight,
-    WebGLRenderer
+    WebGLRenderer,
+    Vector3,
+    MathUtils
 } from './build/three.module.js'
 
 
@@ -51,7 +53,7 @@ const initGui = (mesh, data) => {
         , eyebrow_happy_left: 0, eyebrow_happy_right: 0, eyebrow_lowered_left: 0, eyebrow_lowered_right: 0, eyebrow_raised_left: 0, eyebrow_raised_right: 0, eye_wink_left: 0, eye_wink_right: 0
         , eye_happy_wink_left: 0, eye_happy_wink_right: 0, eye_relaxed_left: 0, eye_relaxed_right: 0, eye_unimpressed_left: 0, eye_unimpressed_right: 0, eye_raised_lower_eyelid_left: 0,
         eye_raised_lower_eyelid_right: 0, eye_surprised_left: 0, eye_surprised_right: 0, iris_small_left: 0, iris_small_right: 0, mouth_aaa: 0, mouth_iii: 0, mouth_uuu: 0, mouth_eee: 0, mouth_ooo: 0
-        , mouth_delta: 0, mouth_smirk: 0, mouth_raised_corner_left: 0, mouth_raised_corner_right: 0, mouth_lowered_corner_left: 0, mouth_lowered_corner_right: 0, iris_rotation_x: 0, iris_rotation_y: 0, head_x: 0, head_y: 0, head_z: 0
+        , mouth_delta: 0, mouth_smirk: 0, mouth_raised_corner_left: 0, mouth_raised_corner_right: 0, mouth_lowered_corner_left: 0, mouth_lowered_corner_right: 0
     }
 
     const gui = new GUI()
@@ -68,9 +70,50 @@ const initGui = (mesh, data) => {
     }
 
     keys.forEach(key => {
+        if (!data[key] || data[key] == -1) {
+            morphs.add(controls, key, 0.0, 0.0, 0.01)
+            return
+        }
+        const hasRight = key.indexOf('right')
+        if (hasRight != -1 && data[`${key.slice(0, hasRight)}left`] == data[key]) {
+            morphs.add(controls, key, 0.0, 0.0, 0.01)
+            return
+        }
+        console.log(key)
         morphs.add(controls, key, 0.0, 1.0, 0.01).onChange(onChangeMorph)
     })
     onChangeMorph()
+
+    const normalizeList = { iris_rotation_x: 0, iris_rotation_y: 0, head_x: 0, head_y: 0, head_z: 0 }
+    for (const key in normalizeList) { controls[key] = 0.0 }
+    const { bones } = mesh.skeleton
+    const [neck] = bones.filter(b => b.name == '首')
+    // const [head] = bones.filter(b => b.name == "頭")
+    const iris = bones.filter(b => b.name == '左目' || b.name == '右目')
+
+
+
+    morphs.add(controls, 'head_x', -1.0, 1.0, 0.01).onChange(() => {
+        neck.setRotationFromAxisAngle(
+            new Vector3(1, 0, 0),
+            MathUtils.degToRad(15 * (controls['head_x'] + 1) - 15)
+        )
+    })
+
+    morphs.add(controls, 'head_y', -1.0, 1.0, 0.01).onChange(() => {
+        neck.setRotationFromAxisAngle(
+            new Vector3(0, 1, 0),
+            MathUtils.degToRad(15 * (controls['head_y'] + 1) - 15)
+        )
+    })
+
+    morphs.add(controls, 'head_z', -1.0, 1.0, 0.01).onChange(() => {
+        neck.setRotationFromAxisAngle(
+            new Vector3(0, 0, 1),
+            MathUtils.degToRad(15 * (controls['head_z'] + 1) - 15)
+        )
+    })
+
     morphs.open()
     const destroy = () => { gui.destroy() }
     return destroy
