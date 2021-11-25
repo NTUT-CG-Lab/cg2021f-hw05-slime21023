@@ -62,14 +62,8 @@ const initGui = (mesh, data) => {
     const keys = Object.keys(standardlist)
     for (const key in standardlist) { controls[key] = 0.0 }
 
-    const onChangeMorph = () => {
-        keys.forEach(key => {
-            const index = data[key]
-            mesh.morphTargetInfluences[index] = controls[key]
-        })
-    }
-
     keys.forEach(key => {
+        console.log(key)
         if (!data[key] || data[key] == -1) {
             morphs.add(controls, key, 0.0, 0.0, 0.01)
             return
@@ -79,10 +73,17 @@ const initGui = (mesh, data) => {
             morphs.add(controls, key, 0.0, 0.0, 0.01)
             return
         }
-        console.log(key)
-        morphs.add(controls, key, 0.0, 1.0, 0.01).onChange(onChangeMorph)
+
+        morphs.add(controls, key, 0.0, 1.0, 0.01).onChange(() => {
+            const index = data[key]
+            mesh.morphTargetInfluences[index] = controls[key]
+        })
     })
-    onChangeMorph()
+
+    keys.forEach(key => {
+        const index = data[key]
+        mesh.morphTargetInfluences[index] = controls[key]
+    })
 
     const normalizeList = { iris_rotation_x: 0, iris_rotation_y: 0, head_x: 0, head_y: 0, head_z: 0 }
     for (const key in normalizeList) { controls[key] = 0.0 }
