@@ -2,8 +2,6 @@ import { GUI } from './jsm/jsm/libs/dat.gui.module.js'
 import { OrbitControls } from './jsm/jsm/controls/OrbitControls.js'
 import { OutlineEffect } from './jsm/jsm/effects/OutlineEffect.js'
 import { MMDLoader } from './jsm/jsm/loaders/MMDLoader.js'
-import { MMDAnimationHelper } from './jsm/jsm/animation/MMDAnimationHelper.js'
-import { AnimationMixer, Int8Attribute } from './build/three.module.js'
 import {
     OrthographicCamera,
     Scene,
@@ -12,8 +10,7 @@ import {
     DirectionalLight,
     WebGLRenderer,
     Vector3,
-    MathUtils,
-    Quaternion
+    MathUtils
 } from './build/three.module.js'
 
 Ammo().then(async AmmoLib => {
@@ -87,8 +84,49 @@ const initGui = (mesh, data) => {
     for (const key in normalizeList) { controls[key] = 0.0 }
     const { bones } = mesh.skeleton
     const [neck] = bones.filter(b => b.name == '首')
-    const iris = bones.filter(b => b.name == '左目' || b.name == '右目')
-    
+    const [rightIris] = bones.filter(b => b.name == '右目')
+    const [leftIris] = bones.filter(b => b.name == '左目')
+
+    const getIrisNormal = (NA, PA, x) => {
+        const nx = (PA - NA) * (x + 1) / 2 + NA
+        return MathUtils.degToRad(nx)
+    }
+
+    morphs.add(controls, 'iris_rotation_x', -1.0, 1.0, 0.01).onChange(() => {
+        const { RXNA, RXPA, LXNA, LXPA } = data
+        const x = controls['iris_rotation_x']
+        const lq = leftIris.quaternion.clone()
+        lq.setFromAxisAngle(
+            new Vector3(1, 0, 0),
+            getIrisNormal(LXNA, LXPA, x)
+        )
+        leftIris.setRotationFromQuaternion(lq)
+
+        const rq = rightIris.quaternion.clone()
+        rq.setFromAxisAngle(
+            new Vector3(1, 0, 0),
+            getIrisNormal(RXNA, RXPA, x)
+        )
+        rightIris.setRotationFromQuaternion(rq)
+    })
+
+    morphs.add(controls, 'iris_rotation_y', -1.0, 1.0, 0.01).onChange(() => {
+        const { RYNA, RYPA, LYNA, LYPA } = data
+        const y = controls['iris_rotation_y']
+        const lq = leftIris.quaternion.clone()
+        lq.setFromAxisAngle(
+            new Vector3(0, 1, 0),
+            getIrisNormal(LYNA, LYPA, y)
+        )
+        leftIris.setRotationFromQuaternion(lq)
+
+        const rq = rightIris.quaternion.clone()
+        rq.setFromAxisAngle(
+            new Vector3(0, 1, 0),
+            getIrisNormal(RYNA, RYPA, y)
+        )
+        rightIris.setRotationFromQuaternion(rq)
+    })
 
     morphs.add(controls, 'head_x', -1.0, 1.0, 0.01).onChange(() => {
         const q = neck.quaternion.clone()
